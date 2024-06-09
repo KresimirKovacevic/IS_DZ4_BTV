@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<bpmn:definitions xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:modeler="http://camunda.org/schema/modeler/1.0" id="Definitions_0go403k" targetNamespace="http://bpmn.io/schema/bpmn" exporter="Camunda Modeler" exporterVersion="5.23.0" modeler:executionPlatform="Camunda Platform" modeler:executionPlatformVersion="7.21.0">
+  <bpmn:collaboration id="Collaboration_1q2wffs">
+    <bpmn:participant id="Participant_0cr1jsi" name="Assignment" processRef="Process_1mt0oof" />
+  </bpmn:collaboration>
+  <bpmn:process id="Process_1mt0oof" name="BTV-Assignment" isExecutable="true" camunda:historyTimeToLive="P3D">
+    <bpmn:laneSet id="LaneSet_1ngkvz4">
+      <bpmn:lane id="Lane_14laydn" name="App">
+        <bpmn:flowNodeRef>Service_DueDateChecker</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_0qqhif1</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>End_Failure</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Service_ValidateAssignment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_17gk6cr</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_1dy9i6p</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_1ivdf83" name="Worker">
+        <bpmn:flowNodeRef>Task_NewAssignment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_12wc0r3</bpmn:flowNodeRef>
+      </bpmn:lane>
+      <bpmn:lane id="Lane_144gbn9" name="Assigner">
+        <bpmn:flowNodeRef>Task_CreateAssignment</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Event_1mxfy69</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Task_AssignmentConfirmation</bpmn:flowNodeRef>
+        <bpmn:flowNodeRef>Gateway_17sc2vh</bpmn:flowNodeRef>
+      </bpmn:lane>
+    </bpmn:laneSet>
+    <bpmn:userTask id="Task_CreateAssignment" name="Create Assignment" camunda:candidateGroups="Assigners">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="DueDate" label="Due Date" type="string" />
+          <camunda:formField id="Desc" label="Description" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_06cbnhx</bpmn:incoming>
+      <bpmn:incoming>Flow_04arx7h</bpmn:incoming>
+      <bpmn:outgoing>Flow_1ra6zze</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:startEvent id="Event_1mxfy69">
+      <bpmn:outgoing>Flow_04arx7h</bpmn:outgoing>
+    </bpmn:startEvent>
+    <bpmn:sequenceFlow id="Flow_1ra6zze" sourceRef="Task_CreateAssignment" targetRef="Service_ValidateAssignment" />
+    <bpmn:sequenceFlow id="Flow_1m5h9uq" sourceRef="Service_ValidateAssignment" targetRef="Gateway_17gk6cr" />
+    <bpmn:sequenceFlow id="Flow_06cbnhx" name="False" sourceRef="Gateway_17gk6cr" targetRef="Task_CreateAssignment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${isValid=="False"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0t9t2cx" name="True" sourceRef="Gateway_17gk6cr" targetRef="Task_NewAssignment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${isValid=="True"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_15yjsu8" sourceRef="Event_12wc0r3" targetRef="Service_DueDateChecker" />
+    <bpmn:sequenceFlow id="Flow_04arx7h" sourceRef="Event_1mxfy69" targetRef="Task_CreateAssignment" />
+    <bpmn:userTask id="Task_NewAssignment" name="New Assignment" camunda:candidateGroups="Workers">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="Update" label="Update Description" type="string" />
+        </camunda:formData>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_0t9t2cx</bpmn:incoming>
+      <bpmn:incoming>Flow_0rq0plp</bpmn:incoming>
+      <bpmn:outgoing>Flow_1n5d7d0</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:sequenceFlow id="Flow_1i480l5" sourceRef="Service_DueDateChecker" targetRef="Gateway_0qqhif1" />
+    <bpmn:sequenceFlow id="Flow_0rq0plp" name="False" sourceRef="Gateway_0qqhif1" targetRef="Task_NewAssignment">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${expired=="False"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1qtrl9l" name="True" sourceRef="Gateway_0qqhif1" targetRef="End_Failure">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${expired=="True"}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_1n5d7d0" sourceRef="Task_NewAssignment" targetRef="Task_AssignmentConfirmation" />
+    <bpmn:boundaryEvent id="Event_12wc0r3" name="1 Minute Check" attachedToRef="Task_NewAssignment">
+      <bpmn:outgoing>Flow_15yjsu8</bpmn:outgoing>
+      <bpmn:timerEventDefinition id="TimerEventDefinition_0e0afms">
+        <bpmn:timeCycle xsi:type="bpmn:tFormalExpression">R/PT1M</bpmn:timeCycle>
+      </bpmn:timerEventDefinition>
+    </bpmn:boundaryEvent>
+    <bpmn:serviceTask id="Service_DueDateChecker" name="Due Date Checker" camunda:type="external" camunda:topic="due-date-check">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="dueDate">${DueDate}</camunda:inputParameter>
+          <camunda:inputParameter name="desc">${Desc}</camunda:inputParameter>
+          <camunda:outputParameter name="expired">${expired}</camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_15yjsu8</bpmn:incoming>
+      <bpmn:incoming>Flow_009u4q0</bpmn:incoming>
+      <bpmn:outgoing>Flow_1i480l5</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:sequenceFlow id="Flow_0gscqj8" sourceRef="Task_AssignmentConfirmation" targetRef="Gateway_17sc2vh" />
+    <bpmn:sequenceFlow id="Flow_009u4q0" name="False" sourceRef="Gateway_17sc2vh" targetRef="Service_DueDateChecker">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${Confirmation == false}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:sequenceFlow id="Flow_0xe3ibu" name="True" sourceRef="Gateway_17sc2vh" targetRef="Event_1dy9i6p">
+      <bpmn:conditionExpression xsi:type="bpmn:tFormalExpression">${Confirmation}</bpmn:conditionExpression>
+    </bpmn:sequenceFlow>
+    <bpmn:exclusiveGateway id="Gateway_0qqhif1" name="Expired?">
+      <bpmn:incoming>Flow_1i480l5</bpmn:incoming>
+      <bpmn:outgoing>Flow_0rq0plp</bpmn:outgoing>
+      <bpmn:outgoing>Flow_1qtrl9l</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="End_Failure" name="Failure">
+      <bpmn:incoming>Flow_1qtrl9l</bpmn:incoming>
+    </bpmn:endEvent>
+    <bpmn:serviceTask id="Service_ValidateAssignment" name="Validate Assignment" camunda:type="external" camunda:topic="assignment-validation">
+      <bpmn:extensionElements>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="dueDate">${DueDate}</camunda:inputParameter>
+          <camunda:inputParameter name="desc">${Desc}</camunda:inputParameter>
+          <camunda:outputParameter name="isValid">${isValid}</camunda:outputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1ra6zze</bpmn:incoming>
+      <bpmn:outgoing>Flow_1m5h9uq</bpmn:outgoing>
+    </bpmn:serviceTask>
+    <bpmn:exclusiveGateway id="Gateway_17gk6cr" name="Is valid?">
+      <bpmn:incoming>Flow_1m5h9uq</bpmn:incoming>
+      <bpmn:outgoing>Flow_06cbnhx</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0t9t2cx</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:userTask id="Task_AssignmentConfirmation" name="Assignment Confirmation" camunda:candidateGroups="Assigners">
+      <bpmn:extensionElements>
+        <camunda:formData>
+          <camunda:formField id="Confirmation" label="Assignment Status" type="boolean" />
+        </camunda:formData>
+        <camunda:inputOutput>
+          <camunda:inputParameter name="UpdateText">${Update}</camunda:inputParameter>
+        </camunda:inputOutput>
+      </bpmn:extensionElements>
+      <bpmn:incoming>Flow_1n5d7d0</bpmn:incoming>
+      <bpmn:outgoing>Flow_0gscqj8</bpmn:outgoing>
+    </bpmn:userTask>
+    <bpmn:exclusiveGateway id="Gateway_17sc2vh" name="Assignment accomplished?">
+      <bpmn:incoming>Flow_0gscqj8</bpmn:incoming>
+      <bpmn:outgoing>Flow_009u4q0</bpmn:outgoing>
+      <bpmn:outgoing>Flow_0xe3ibu</bpmn:outgoing>
+    </bpmn:exclusiveGateway>
+    <bpmn:endEvent id="Event_1dy9i6p" name="Success">
+      <bpmn:incoming>Flow_0xe3ibu</bpmn:incoming>
+    </bpmn:endEvent>
+  </bpmn:process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+    <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Collaboration_1q2wffs">
+      <bpmndi:BPMNShape id="Participant_0cr1jsi_di" bpmnElement="Participant_0cr1jsi" isHorizontal="true">
+        <dc:Bounds x="160" y="60" width="1010" height="420" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_14laydn_di" bpmnElement="Lane_14laydn" isHorizontal="true">
+        <dc:Bounds x="190" y="60" width="980" height="140" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_1ivdf83_di" bpmnElement="Lane_1ivdf83" isHorizontal="true">
+        <dc:Bounds x="190" y="200" width="980" height="150" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_144gbn9_di" bpmnElement="Lane_144gbn9" isHorizontal="true">
+        <dc:Bounds x="190" y="350" width="980" height="130" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_0ovadsg_di" bpmnElement="Task_CreateAssignment">
+        <dc:Bounds x="300" y="370" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1mxfy69_di" bpmnElement="Event_1mxfy69">
+        <dc:Bounds x="222" y="392" width="36" height="36" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1navvs4_di" bpmnElement="Task_NewAssignment">
+        <dc:Bounds x="600" y="240" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1l9yiy7_di" bpmnElement="Service_DueDateChecker">
+        <dc:Bounds x="680" y="90" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_0qqhif1_di" bpmnElement="Gateway_0qqhif1" isMarkerVisible="true">
+        <dc:Bounds x="815" y="135" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="818" y="123" width="44" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_0p8pu6s_di" bpmnElement="End_Failure">
+        <dc:Bounds x="982" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="984" y="123" width="34" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="BPMNShape_0wc1e5i" bpmnElement="Service_ValidateAssignment">
+        <dc:Bounds x="300" y="90" width="100" height="80" />
+        <bpmndi:BPMNLabel />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_17gk6cr_di" bpmnElement="Gateway_17gk6cr" isMarkerVisible="true">
+        <dc:Bounds x="455" y="105" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="461" y="75" width="41" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Activity_1eqfejw_di" bpmnElement="Task_AssignmentConfirmation">
+        <dc:Bounds x="790" y="370" width="100" height="80" />
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Gateway_17sc2vh_di" bpmnElement="Gateway_17sc2vh" isMarkerVisible="true">
+        <dc:Bounds x="1035" y="385" width="50" height="50" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1026" y="442" width="74" height="27" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_1dy9i6p_di" bpmnElement="Event_1dy9i6p">
+        <dc:Bounds x="1102" y="142" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1100" y="123" width="42" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Event_18ej1b4_di" bpmnElement="Event_12wc0r3">
+        <dc:Bounds x="632" y="222" width="36" height="36" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="571" y="210" width="78" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="Flow_1ra6zze_di" bpmnElement="Flow_1ra6zze">
+        <di:waypoint x="350" y="370" />
+        <di:waypoint x="350" y="170" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1m5h9uq_di" bpmnElement="Flow_1m5h9uq">
+        <di:waypoint x="400" y="130" />
+        <di:waypoint x="455" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_06cbnhx_di" bpmnElement="Flow_06cbnhx">
+        <di:waypoint x="480" y="155" />
+        <di:waypoint x="480" y="410" />
+        <di:waypoint x="400" y="410" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="446" y="268" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0t9t2cx_di" bpmnElement="Flow_0t9t2cx">
+        <di:waypoint x="505" y="130" />
+        <di:waypoint x="540" y="130" />
+        <di:waypoint x="540" y="280" />
+        <di:waypoint x="600" y="280" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="544" y="248" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_15yjsu8_di" bpmnElement="Flow_15yjsu8">
+        <di:waypoint x="650" y="222" />
+        <di:waypoint x="650" y="130" />
+        <di:waypoint x="680" y="130" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_04arx7h_di" bpmnElement="Flow_04arx7h">
+        <di:waypoint x="258" y="410" />
+        <di:waypoint x="300" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1i480l5_di" bpmnElement="Flow_1i480l5">
+        <di:waypoint x="780" y="160" />
+        <di:waypoint x="815" y="160" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0rq0plp_di" bpmnElement="Flow_0rq0plp">
+        <di:waypoint x="840" y="185" />
+        <di:waypoint x="840" y="270" />
+        <di:waypoint x="700" y="270" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="806" y="224" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1qtrl9l_di" bpmnElement="Flow_1qtrl9l">
+        <di:waypoint x="865" y="160" />
+        <di:waypoint x="982" y="160" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="912" y="142" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_1n5d7d0_di" bpmnElement="Flow_1n5d7d0">
+        <di:waypoint x="700" y="300" />
+        <di:waypoint x="840" y="300" />
+        <di:waypoint x="840" y="370" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0gscqj8_di" bpmnElement="Flow_0gscqj8">
+        <di:waypoint x="890" y="410" />
+        <di:waypoint x="1035" y="410" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_009u4q0_di" bpmnElement="Flow_009u4q0">
+        <di:waypoint x="1060" y="385" />
+        <di:waypoint x="1060" y="100" />
+        <di:waypoint x="780" y="100" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1026" y="273" width="28" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0xe3ibu_di" bpmnElement="Flow_0xe3ibu">
+        <di:waypoint x="1085" y="410" />
+        <di:waypoint x="1120" y="410" />
+        <di:waypoint x="1120" y="178" />
+        <bpmndi:BPMNLabel>
+          <dc:Bounds x="1128" y="273" width="23" height="14" />
+        </bpmndi:BPMNLabel>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</bpmn:definitions>

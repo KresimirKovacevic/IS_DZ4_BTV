@@ -1,0 +1,62 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>FormValidator</groupId>
+  <artifactId>FormValidator</artifactId>
+  <version>0.0.1-SNAPSHOT</version>
+	<properties>
+	    <camunda.platform.version>7.19.0</camunda.platform.version>
+	    <slf4j.version>1.7.26</slf4j.version>
+	    <jaxb.version>2.2.3</jaxb.version>
+	    <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+	    <java.version>17</java.version>
+	</properties>
+  
+  
+  <dependencies>
+    <dependency>
+      <groupId>org.camunda.bpm</groupId>
+      <artifactId>camunda-external-task-client</artifactId>
+      <version>${camunda.platform.version}</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-simple</artifactId>
+      <version>${slf4j.version}</version>
+    </dependency>
+  </dependencies>
+  
+  <profiles>
+    <profile>
+      <id>jdk9-plus</id>
+
+      <activation>
+        <jdk>(1.8,)</jdk>
+      </activation>
+
+      <dependencies>
+        <dependency>
+          <groupId>com.sun.xml.bind</groupId>
+          <artifactId>jaxb-impl</artifactId>
+          <version>${jaxb.version}</version>
+        </dependency>
+      </dependencies>
+
+    </profile>
+  </profiles>
+  
+   <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <version>${maven.compiler.plugin.version}</version>
+        <configuration>
+          <source>${java.version}</source>
+          <target>${java.version}</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+</project>
+
